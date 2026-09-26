@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3 (2026-09-26)
+
+Readability pass; no facts, links or code changed.
+
+- Added an "At a glance" section with the five steps that matter most.
+- Split dense paragraphs into a bold lead plus short bullets (SDK gate notes, checklist items, Phase 2 build rules, §5 notes, pitfalls, reset, store, audit).
+- Turned the coding-agent prompt into nine numbered steps; "How to use this" now points agents to it.
+
 ## 1.2 (2026-09-26)
 
 - Separated compliant App Store screen-recording previews from filmed marketing demos, with the App Review rule linked.
