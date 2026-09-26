@@ -2,7 +2,7 @@
 
 A practical guide to bringing an existing iPhone app to iPhone Duo, Apple's first folding iPhone. Written for iOS developers and the coding agents they work with.
 
-It combines Apple's documentation and the six iPhone Duo Tech Talks with field notes from shipping a real SwiftUI app to the Duo: where the fold actually is, the layouts that held up in every pose, the dead ends, and how to test poses on the simulator.
+It combines Apple's documentation, the six iPhone Duo Tech Talks and the Group Lab Q&A (every Apple claim links to its source) with field notes from shipping a real SwiftUI app to the Duo: where the fold actually is, the layouts that held up in every pose, the dead ends, and how to test poses on the simulator.
 
 **[Read the playbook](PLAYBOOK.md)**
 
@@ -10,7 +10,7 @@ It combines Apple's documentation and the six iPhone Duo Tech Talks with field n
 
 ## What's inside
 
-- The device in numbers, including measured fold positions and the SDK gate
+- The device: size classes, orientation, the SDK gate (Xcode 26, 27.0, 27.1), and test sizes with their Apple sources
 - Five rules and a phased checklist: current SDK, iOS 27.1 SDK, App Store
 - An API quick reference for SwiftUI and UIKit
 - Fold-aware SwiftUI patterns: two pages in landscape, focal element above the hinge, cards centred on one page, passing the fold into scroll views

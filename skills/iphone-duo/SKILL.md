@@ -10,6 +10,6 @@ Read `playbook.md` in this folder in full before changing any code. It is the so
 1. Run `audit.sh <repo>` (next to this file) and report the numbers.
 2. Work Phase 1 of the checklist (playbook §3): one commit per checklist item, tests passing after each.
 3. Start Phase 2 only if the project builds with the iOS 27.1 SDK. Gate 27.1 APIs with `#available`.
-4. Never add device, idiom or pose checks (playbook §2, rules 1 and 4). For the fold, use the reserved-region patterns in §5.
+4. Never add device, idiom or pose checks (playbook §2, rules 1 and 4), and never hard-code the device numbers from §1. For the fold, use the reserved-region patterns in §5. Gate each API with `#available` for the iOS version in §4.
 5. After any layout change, capture the affected screens on the outer display, the inner display in portrait and in landscape, and a regular iPhone (§7). Look at the captures yourself before calling the change done.
 6. Finish by listing anything the playbook got wrong or does not cover.
