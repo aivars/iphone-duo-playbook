@@ -2,7 +2,7 @@
 
 A practical guide to bringing an existing iPhone app to iPhone Duo, Apple's first folding iPhone. Written for iOS developers and the coding agents they work with.
 
-It combines Apple's documentation, the six iPhone Duo Tech Talks and the Group Lab Q&A (every Apple claim links to its source) with field notes from shipping a real SwiftUI app to the Duo: where the fold actually is, the layouts that held up in every pose, the dead ends, and how to test poses on the simulator.
+It combines Apple's documentation, the six iPhone Duo Tech Talks and the Group Lab Q&A with field notes from adapting an existing, released SwiftUI app in the Duo beta simulator: measured fold positions, layout experiments, dead ends, and how to test transitions. Physical-device validation remains a separate step after launch.
 
 **[Read the playbook](PLAYBOOK.md)**
 
@@ -13,9 +13,9 @@ It combines Apple's documentation, the six iPhone Duo Tech Talks and the Group L
 - The device: size classes, orientation, the SDK gate (Xcode 26, 27.0, 27.1), and test sizes with their Apple sources
 - Five rules and a phased checklist: current SDK, iOS 27.1 SDK, App Store
 - An API quick reference for SwiftUI and UIKit
-- Fold-aware SwiftUI patterns: two pages in landscape, focal element above the hinge, cards centred on one page, passing the fold into scroll views
+- Fold-aware SwiftUI patterns: two pages in landscape, focal element above the hinge, cards centered on one page, RTL and viewport/content coordinate handling
 - Pitfalls and dead ends, including what the outer display can't do
-- Simulator testing: capturing each display, a screen catalog, recording live pose changes
+- Simulator testing: capturing each display, a screen catalog, live transitions, accessibility, keyboard and state-continuity checks
 - Screenshots and App Store featuring
 - An audit script and a ready-made prompt for a coding agent
 
@@ -36,9 +36,14 @@ Then ask: "Get this app ready for iPhone Duo."
 
 ```bash
 ./scripts/duo-audit.sh ~/Developer/YourApp
+./scripts/duo-audit.sh ~/Developer/YourApp --details
 ```
 
-It counts screen-based layout, idiom and orientation checks, fixed sizes, text-only buttons, sheets and more. Signals, not verdicts: read each hit before changing it.
+It counts regex matches for screen-based layout, idiom and orientation checks, fixed sizes, text-only buttons, sheets and more. `--details` adds file and line references. Signals, not verdicts: read each hit before changing it. This is not a Swift parser or a readiness certification.
+
+## Maintaining this guide
+
+After editing the playbook or audit script, run `bash scripts/sync-skill.sh` to update the installable copies. Run `python3 scripts/test-audit.py` and `python3 scripts/check-swift-examples.py` to validate the audit behavior and type-check the layout examples. The Swift check needs Xcode 27.1 or newer; it does not replace visual or hardware testing.
 
 ## Watch it being built
 

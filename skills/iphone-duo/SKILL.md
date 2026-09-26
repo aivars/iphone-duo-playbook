@@ -7,9 +7,9 @@ description: Use when adapting an existing iOS app (SwiftUI or UIKit) for iPhone
 
 Read `playbook.md` in this folder in full before changing any code. It is the source of truth; this file only sets the order of work.
 
-1. Run `audit.sh <repo>` (next to this file) and report the numbers.
-2. Work Phase 1 of the checklist (playbook §3): one commit per checklist item, tests passing after each.
-3. Start Phase 2 only if the project builds with the iOS 27.1 SDK. Gate 27.1 APIs with `#available`.
-4. Never add device, idiom or pose checks (playbook §2, rules 1 and 4), and never hard-code the device numbers from §1. For the fold, use the reserved-region patterns in §5. Gate each API with `#available` for the iOS version in §4.
-5. After any layout change, capture the affected screens on the outer display, the inner display in portrait and in landscape, and a regular iPhone (§7). Look at the captures yourself before calling the change done.
-6. Finish by listing anything the playbook got wrong or does not cover.
+1. Run `bash audit.sh <repo> --details` (next to this file), report the counts, and inspect the hits. They are audit signals, not automatic defects.
+2. Check the selected SDK, deployment target and existing changes. Work applicable Phase 1 items (playbook §3) in small, reviewable changes with tests after each. Follow the user's authorization requirements for commits and external actions.
+3. Use Phase 2's 27.0 APIs with the 27.0 SDK and its 27.1 APIs only with the 27.1 SDK or newer. `#available` guards older runtimes; it does not make a new symbol compile with an older SDK. Preserve deployment targets and fallbacks unless agreed otherwise.
+4. Base layout on available space and reserved regions, not device-model, idiom or hinge-angle pose checks. Do not mechanically remove non-layout checks. Never hard-code §1 device measurements. Choose active-only or inactive-region layout deliberately, and keep coordinate-space and RTL policies consistent (§5).
+5. Preserve state above changing layout branches. Visually inspect affected screens on both Duo displays, in each relevant pose, and on regular iPhones. Run §7's accessibility, RTL, keyboard, live-transition and real-navigation checks; a screen catalog alone is insufficient.
+6. Report changes, checks passed, blocked or untested configurations, and remaining playbook gaps. Distinguish simulator evidence from hardware validation. Do not publish, release or reset installations containing needed data without authorization.

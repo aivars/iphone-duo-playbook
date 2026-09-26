@@ -1,6 +1,6 @@
 # iPhone Duo Playbook
 
-This is a practical guide to making an existing iPhone app feel native on iPhone Duo. It combines Apple's guidance with field notes from shipping a real SwiftUI app to iPhone Duo: a timer-led fitness app that was portrait-only before this work.
+This is a practical guide to making an existing iPhone app feel native on iPhone Duo. It combines Apple's guidance with field notes from adapting an existing, released SwiftUI app in the iPhone Duo beta simulator: a timer-led fitness app that was portrait-only before this work. Simulator validation is not validation on shipping Duo hardware; that remains a separate check after launch.
 
 Apple's framing is the most important idea here: **this is a resizability problem, not a new-device problem.** Almost nothing below asks for Duo-specific code. It asks for layouts that stop assuming a 402-point-wide portrait phone. The one exception is the fold, and §5 covers how to handle it without special-casing the device.
 
@@ -75,22 +75,22 @@ A portrait-locked, iPhone-only app has never been drawn at regular width or in l
 ## 2. Five rules
 
 1. **Lay out from size classes and your container's size.** Never from the screen size, the device idiom or the interface orientation. `UIScreen.main` is on its way to deprecation (Tech Talk 111461).
-2. **Prefer system containers.** `NavigationStack`, `NavigationSplitView`, `TabView`, `List`, `ScrollView`, `UINavigationController` and `UITabBarController` adapt to every pose for free. Hand-rolled toolbars and tab bars don't.
+2. **Prefer system containers.** `NavigationStack`, `NavigationSplitView`, `TabView`, `List`, `ScrollView`, `UINavigationController` and `UITabBarController` provide adaptive behavior. You still need to test your content inside them. Hand-rolled toolbars and tab bars require extra work.
 3. **Keep interactive content inside the safe area; let backgrounds bleed.** Safe areas on iPhone Duo are **asymmetric**. Read each edge on its own and never assume the opposite inset matches.
-4. **Never tie a feature or a control to a pose.** The same hierarchy and features closed, open and folded. Special layouts are for hands-free use, and even then nothing disappears.
+4. **Never make a feature available only in one pose.** Keep features reachable as the layout changes. A secondary pane may collapse into navigation or an alternate presentation; do not remove the user's only route to it. Layout can respond to reserved regions without identifying a device model or inferring a pose from hinge angles.
 5. **Keep controls, timers and headlines off the fold.** System sheets, alerts, menus and toolbar buttons already avoid it. Scrolling content may cross it (Tech Talk 111466).
 
 Sources: [Preparing your app for iPhone Duo](https://developer.apple.com/documentation/technologyoverviews/preparing-your-app-for-iphone-duo), [HIG: Designing for iPhone Duo](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo).
 
 ## 3. Checklist
 
-### Phase 0: audit (any Xcode, about 30 minutes per app)
-Run the script in §10 (or `scripts/duo-audit.sh`). Then open every screen, sheet and popover at both display sizes, in both orientations:
+### Phase 0: audit (start with a roughly 30-minute triage)
+Run the script in §10 (or `scripts/duo-audit.sh`). Read the matching code before deciding what to change; counts are not failures. A complete screen and accessibility audit takes longer. Then open every screen, sheet and popover at both display sizes, in both orientations:
 - With Xcode 27.1 beta: use the iPhone Duo simulator in Device Hub.
 - With Xcode 27: use Device Hub's [resize mode](https://developer.apple.com/documentation/xcode/configuring-the-environment-of-a-simulated-device) to set 466 × 678 and 669 × 951.
 
 ### Phase 1: no iOS 27 APIs needed (Xcode 26 or 27)
-- [ ] **Remove screen-based layout.** Replace `UIScreen.main`, `userInterfaceIdiom`, `isPad`/`isPhone` and orientation branches with size classes and container sizes.
+- [ ] **Remove screen-based layout assumptions.** Replace screen dimensions, idiom and orientation checks used as proxies for available space with size classes and container sizes. Inspect other uses individually; do not delete capability checks or non-layout behavior just because a regex matched.
 - [ ] **Give toolbar items both a symbol and a title** ([Preparing your app for iPhone Duo](https://developer.apple.com/documentation/technologyoverviews/preparing-your-app-for-iphone-duo)).
   - A vertical bar shows the icon.
   - A horizontal bar prefers the icon and falls back to the title.
@@ -98,22 +98,22 @@ Run the script in §10 (or `scripts/duo-audit.sh`). Then open every screen, shee
   - By default, a title-only item or a custom view stays in the horizontal layout. A custom view can opt in with `axisBehavior(.verticalPreferred)` (iOS 27.1).
   - Keep actions like Edit as text, as the HIG recommends ([HIG: Toolbars](https://developer.apple.com/design/human-interface-guidelines/toolbars)).
 - [ ] **Audit fixed sizes.**
-  - `.frame(width: 340)` on anything on screen is a bug on a folding phone. Off-screen render canvases are fine.
-  - Fixed *heights* for hero visuals are a quieter version of the same bug. A 260-pt timer ring looks small on the inner display (§5.7).
+  - A fixed width such as `.frame(width: 340)` is a signal to review, not automatically a bug. Icons, bounded cards, controls and off-screen render canvases can have intentional fixed dimensions. Fix sizes that overflow the container or prevent useful adaptation.
+  - Review fixed *heights* for hero visuals too. A 260-pt timer ring may look small on the inner display or crowd controls on a short screen (§5.7).
 - [ ] **Audit `ignoresSafeArea`.**
   - Backgrounds and maps may bleed; interactive overlays may not.
   - Scope it to the edges you need, for example `.ignoresSafeArea(edges: [.top, .horizontal])`.
-  - A `GeometryReader` that subtracts `safeAreaInsets` is a defect. Reading `.size` is fine.
+  - Establish which bounds a `GeometryReader` measures before using `safeAreaInsets`. Do not subtract insets a second time from an already safe-area-constrained container. Accounting for each edge can be appropriate when starting from full-bleed bounds.
   - For a photo hero under a bar, use [`backgroundExtensionEffect()`][bgext] (iOS 26).
-- [ ] **Cap the width of readable text at regular width** (a 669-pt column of body text is too wide). Keep heroes full-bleed.
-- [ ] **Use an even number of grid columns** so content divides cleanly around the fold ([HIG: Designing for iPhone Duo](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo)).
+- [ ] **Review readable line length at regular width.** Consider a maximum text-column width based on typography and Dynamic Type, not a device-width threshold. Keep heroes full-bleed where useful.
+- [ ] **Consider even grid column counts** for grids divided by a fold; do not force extra columns when content or accessibility text sizes need a single column ([HIG: Designing for iPhone Duo](https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo)).
 - [ ] **Consider a split view** where the app is a list with a detail view. `NavigationSplitView` shows both panes when open and collapses when closed. Keep the selection above the split, so folding doesn't lose it.
 - [ ] **Camera:** adopt [`AVCaptureDevice.RotationCoordinator`][rotation] (iOS 17) so photos stay upright as the device opens and rotates.
-- [ ] **Short screens:** the outer display is only 678 pt tall. Make sure primary buttons never scroll off (§6).
+- [ ] **Short screens:** test the derived 678-pt outer-display height. Primary actions must remain reachable with large text and the keyboard visible. A pinned action can help, but scrolling is a valid fallback; do not clip content just to keep everything on one screen (§6).
 - [ ] **Rebuild with Xcode 27.1 (beta until iOS 27.1 ships) and look again.**
 
 ### Phase 2: iOS 27 APIs
-Each item shows the iOS version it needs. Gate every one with `#available`; none of them back-deploy.
+Each item shows the iOS version it needs. Use an SDK that contains the API, then guard calls with `#available` when your deployment target is older than the API. **Build-time and runtime availability are different:** `#available(iOS 27.1, *)` does not make a 27.1 symbol compile with the 27.0 SDK. The 27.0 items can be adopted using Xcode 27.0; only the 27.1 items require Xcode 27.1. Keep useful fallbacks on older OS versions; do not raise the deployment target just to copy an example.
 
 - [ ] **Sheets.**
   - On the outer display, sheet toolbars go vertical by default. For a sheet whose toolbar is a single Done or Close, opt out: [`toolbarVerticalBehavior(.disabled)`][tvb] in SwiftUI; in UIKit, override [`preferredVerticalBarBehavior`][pvbb] to return `.disabled` and call `setNeedsUpdateOfVerticalBarConfiguration()` when it changes (iOS 27.1).
@@ -193,18 +193,24 @@ Each item shows the iOS version it needs. Gate every one with `#available`; none
 
 ## 5. Fold-aware patterns
 
-These patterns held up across every pose in a shipped app. Each one reads the fold region, never a device or pose check, so it falls back to your normal layout everywhere else.
+These patterns are based on beta-simulator testing of an existing app, not a claim of physical-device validation. Each reads the fold region rather than identifying a device model or pose. The examples are layout building blocks, not complete screens: names such as `timerRing`, `details`, `controls` and `normalLayout` stand for your own views.
+
+**Build requirement:** the reserved-region examples require the iOS 27.1 SDK to compile even though the helper returns `nil` on older iOS versions. Runtime guards do not add symbols to an older SDK. Keep stateful models above conditional layout branches so resizing does not restart sessions or discard input; verify this in §7.
 
 ### 5.1 One helper for the fold
 
 ```swift
 /// The fold, from iOS 27.1 reserved regions.
 enum DuoFold {
-    /// The fold in `proxy`'s coordinates, active or not, so the layout
-    /// doesn't jump as the phone opens and closes.
+    /// Includes inactive divisions to keep this example's two-page structure
+    /// when flat. Mirrored coordinates match SwiftUI's semantic layouts.
     static func region(in proxy: GeometryProxy) -> CGRect? {
         if #available(iOS 27.1, *) {
-            return proxy.reservedRegions(kind: .division, options: .includeInactive).first?.frame
+            return proxy.reservedRegions(
+                kind: .division,
+                options: .includeInactive,
+                layoutDirectionBehavior: .mirrors
+            ).first?.frame
         }
         return nil
     }
@@ -221,7 +227,11 @@ enum DuoFold {
 }
 ```
 
-Use **`.includeInactive`**. Without it, the layout rearranges itself the moment someone bends a flat phone, which feels broken. With it, the layout depends only on the orientation. Apple suggests inactive regions for high-level layout decisions (Tech Talk 111463). When the device is flat, the region is inactive and zero wide, so the two-page layout simply shows with no gap.
+**Choose whether to include inactive regions.** This helper opts in to keep a two-page structure when the device is flat; Apple suggests inactive regions for high-level layout decisions such as grid column counts (Tech Talk 111463). When flat, the fold region is inactive with zero thickness. For a layout that should split only when folding makes it useful, query active regions instead (omit `.includeInactive`) or use an arrangement view. A deliberate, state-preserving transition is valid; avoiding all layout changes is not a requirement.
+
+**Coordinate contract:** this helper returns SwiftUI's default mirrored coordinates. Use them with semantic layouts such as `HStack` and `.leading`/`.trailing`, as below. Do not mix them with physical-left assumptions or raw x offsets. A manually positioned layout can instead request `layoutDirectionBehavior: .fixed`, but must then map semantic edges to physical sides using `layoutDirection` and avoid applying mirroring twice. Test both RTL and LTR with asymmetric insets ([reserved-region API][regions]).
+
+The helper uses the first division for this single-fold example. General-purpose layouts must handle all relevant divisions. The `280`-point minimum below is an example content-fit threshold, not a hardware dimension; adapt it to your content and Dynamic Type.
 
 ### 5.2 Portrait, partially folded: the focal element above, the controls below
 
@@ -245,7 +255,7 @@ GeometryReader { proxy in
 
 ### 5.3 Landscape: two pages, like a book
 
-When the fold is vertical, every custom screen becomes two pages. Give each page its own purpose; don't split one column in half.
+When a vertical fold and enough space make a two-page layout useful, give each page its own purpose; don't split one column in half. These are examples from a timer-led app, not requirements for every screen.
 
 | Screen | Leading page | Trailing page |
 |---|---|---|
@@ -256,7 +266,7 @@ When the fold is vertical, every custom screen becomes two pages. Give each page
 | Progress | the chart | series and range pickers |
 | Completion | photo or celebration | message + Close |
 
-Put the **primary action on the trailing page**, where the footer lives. In a scaffold that owns the footer, constrain the footer to that page:
+In this design the **primary action is on the trailing page**, where the footer lives. Other apps should keep actions contextual to their content. In a scaffold that owns the footer, constrain it to that page using the helper's mirrored coordinates and semantic alignment (including in RTL):
 
 ```swift
 footer()
@@ -282,9 +292,24 @@ private struct DuoPageCentering: ViewModifier {
     func body(content: Content) -> some View {
         GeometryReader { proxy in
             if let fold = DuoFold.side(in: proxy) {
-                let x = edge == .leading ? 0 : fold.maxX
-                let width = edge == .leading ? fold.minX : proxy.size.width - fold.maxX
-                content.frame(width: width, height: proxy.size.height).offset(x: x)
+                HStack(spacing: fold.width) {
+                    if edge == .leading {
+                        content.frame(width: fold.minX, height: proxy.size.height)
+                    } else {
+                        Color.clear.frame(width: fold.minX)
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+                    }
+                    if edge == .trailing {
+                        content.frame(width: proxy.size.width - fold.maxX,
+                                      height: proxy.size.height)
+                    } else {
+                        Color.clear.frame(width: proxy.size.width - fold.maxX)
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height)
             } else {
                 content.frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -293,22 +318,22 @@ private struct DuoPageCentering: ViewModifier {
 }
 ```
 
-Transparent `GeometryReader` areas don't intercept taps, so a dimmed "tap to dismiss" backdrop behind the card keeps working.
+`HStack` supplies semantic leading/trailing order, matching the mirrored fold coordinates in RTL. The empty page explicitly disables hit testing and accessibility. Verify backdrop dismissal, card interactions and VoiceOver focus in the actual presentation; backgrounds, gestures and `contentShape` can change hit testing. Also provide an accessible Close action rather than relying only on tapping the backdrop. This example assumes a bounded overlay viewport, not an intrinsically sized row in a scroll view.
 
-### 5.5 Screens inside a scroll view: pass the fold down
+### 5.5 Scroll views: distinguish viewport from moving content
 
-A `GeometryReader` inside a `ScrollView` gets no height proposal and measures nothing useful. **Read the fold outside the scroll view** and pass it into the content through the environment, converted to the content's coordinates (subtract the content's padding):
+A `ScrollView` proposes an unspecified size along its scrolling axis. An unconstrained `GeometryReader` used as its content therefore does not measure the viewport height. Measuring an explicitly sized child, or measuring a child's background, can still be useful.
 
-```swift
-extension EnvironmentValues {
-    @Entry var foldInContent: CGRect? = nil
-}
+**Prefer a viewport-based design.** Read the fold in a bounded container outside the scroll view, arrange stationary controls or panes there, and let long-form content scroll normally within its pane. Ordinary scrolling content may cross the fold (§5.6); do not continuously rearrange an article or feed around it. An arrangement view belongs outside, not inside, scrolling content.
 
-// Outside the ScrollView:
-.environment(\.foldInContent, DuoFold.region(in: proxy)?.offsetBy(dx: 0, dy: -topPadding))
-```
+If a custom interaction genuinely needs the fold in moving content coordinates:
 
-Then a small view of your own inside the content (we call ours `FoldSplit`, with `above`, `below` and `unfolded` builders) can arrange itself: stacked around a horizontal fold, or side by side around a vertical one.
+1. Give the viewport a named coordinate space and measure the content's current origin in that same space, including scrolling and padding.
+2. Read the reserved region in the viewport. For manual physical-coordinate arithmetic, request `.fixed` rather than mixing mirrored geometry with an unmirrored origin.
+3. For a translation-only hierarchy, subtract **both components of the measured content origin** from the region's origin. Subtracting only `topPadding` is not a conversion once content scrolls or is nested. Scaled or rotated content needs an appropriate transform, not just subtraction.
+4. Recompute when geometry, scroll position, safe areas, keyboard or layout direction changes. Do not cache the initial frame or feed a displacement back into its own measurement loop.
+
+Test at nonzero scroll offsets in LTR and RTL. Use a viewport layout instead if this complexity does not materially improve the interaction.
 
 ### 5.6 What may cross the fold
 
@@ -326,7 +351,7 @@ A fixed 260-pt ring is fine on a 402-pt phone and looks lost on the inner displa
 let ring = min(320, max(180, availableHeight - heightOfEverythingElse))
 ```
 
-We verified the result on an iPhone SE, a 6.3-inch iPhone, the outer display and the inner display.
+The original field testing covered an iPhone SE-sized simulator, a 6.3-inch iPhone simulator, and both Duo simulator displays. The example's 180-pt minimum is a design preference, not a guarantee of fit: if less space remains, use a smaller or scrollable fallback instead of clipping controls. Measure text at the actual Dynamic Type size.
 
 ## 6. Pitfalls and dead ends
 
@@ -373,7 +398,17 @@ We verified the result on an iPhone SE, a 6.3-inch iPhone, the outer display and
 - Run a background loop that captures both displays every 2 seconds while someone folds, rotates and closes the device on each key screen, including mid-timer. Then remove duplicate frames and review.
 - It caught layout jumps and state issues that per-pose screenshots never show.
 
-**Resetting state** (field observation): to rerun onboarding, uninstall and reinstall the app. Writing preferences from outside the app (`simctl spawn … defaults write`, or editing its plist) gets overwritten by the app's cached preferences.
+**Resetting state** (field observation): external preference edits were overwritten by cached preferences in our tests. Prefer a debug-only in-app reset or launch option on a dedicated test installation. Uninstall/reinstall is a fallback that deletes that installation's local app data and may not reset Keychain or cloud state; do not use it on an installation containing data you need.
+
+### Acceptance checks beyond screenshots
+
+- **Dynamic Type and localization:** test the largest accessibility sizes, long translations and both LTR/RTL. Labels and primary actions remain readable and reachable, with a scrolling fallback where needed.
+- **VoiceOver and Voice Control:** verify logical reading order, useful control names and focus after folding, rotation and sheet dismissal. Decorative/empty layout regions should not become accessibility elements.
+- **Keyboard:** focus fields in sheets and forms; confirm inputs, validation messages and actions remain reachable as the keyboard and bars resize the viewport.
+- **Motion and contrast:** check Reduce Motion, light/dark appearances, contrast and meaning conveyed without color alone.
+- **State continuity:** during a running timer, audio session or unsaved form, fold, unfold, rotate and enter/leave Split View. Check elapsed time, playback, selection, navigation path, text/focus and scroll position. Layout-only transitions must not restart work, duplicate tasks or lose edits.
+- **Real navigation:** test the actual app flow, not only the screen catalog. A catalog with a nonfunctional Close button is not evidence that dismissal works.
+- **Hardware follow-up:** record simulator-only limitations and repeat affected checks on a real Duo when available. Record Xcode/runtime versions and distinguish pass, fail, blocked and not tested.
 
 **Also check regular iPhones:** every fold-aware change must leave them untouched. Check an SE-sized phone, a 6.3-inch phone and a Max after each change.
 
@@ -384,7 +419,9 @@ We verified the result on an iPhone SE, a 6.3-inch iPhone, the outer display and
 - The simulator doesn't show the pose, so a half-folded screenshot looks like a flat one with a clever layout. Lead with **landscape book-pose** shots, where two pages read as "made for iPhone Duo" at a glance.
 - Capture timers mid-phase (ring about half full), not at 0:00.
 
-**App preview:** record on hardware or with a real prop setup. The pose is the story, and a simulator recording can't show it. App Store Connect lists iPhone Duo app preview specs, but uploads aren't available yet.
+**App Store preview:** use screen recordings of the app itself. Apple's [App Review Guideline 2.3.4](https://developer.apple.com/app-store/review/guidelines/#accurate-metadata) permits explanatory narration and overlays, but does not make a filmed device or prop demonstration an acceptable substitute for an app screen capture. App Store Connect lists iPhone Duo app preview specs, but uploads aren't available yet.
+
+**Separate marketing video:** a filmed device can demonstrate the fold for your website, social channels or a featuring pitch when that format is accepted. Label simulations or props accurately; do not present them as real-device validation. Keep this deliverable separate from the App Store preview.
 
 **Featuring nomination** (App Store Connect, Featuring Nominations): use the *App Enhancements* type. Submit at least 3 weeks ahead ([nominate your app for featuring](https://developer.apple.com/help/app-store-connect/manage-featuring-nominations/nominate-your-app-for-featuring)), ideally up to 3 months ([getting featured](https://developer.apple.com/app-store/getting-featured/)). What helps:
 - a one-line story about why iPhone Duo suits your app's real use (for example, "propped half-folded on a table, the timer faces you above the hinge");
@@ -415,29 +452,20 @@ We verified the result on an iPhone SE, a 6.3-inch iPhone, the outer display and
 
 ## 10. Audit script
 
-This lists signals, not verdicts. A fixed width may be an off-screen canvas, and a `UIScreen` hit may be dead code, so read each hit before changing it. The same script is in `scripts/duo-audit.sh`.
+The maintained script is [`scripts/duo-audit.sh`](https://github.com/aivars/iphone-duo-playbook/blob/main/scripts/duo-audit.sh). It lists signals, not verdicts: a fixed width may be intentional, and a screen reference may be unrelated to layout. Read each hit before changing it. These single-line regexes are a triage aid, not a Swift parser: multiline calls, constants, localized labels and wrapped APIs may not match. Counts cannot certify readiness.
 
 ```bash
-D=~/Developer/YourApp
-XD=(--exclude-dir=build --exclude-dir=.git --exclude-dir=.build \
-    --exclude-dir=DerivedData --exclude-dir=Pods)
-c(){ grep -rEo "$1" "$D" --include="*.swift" "${XD[@]}" 2>/dev/null | wc -l; }
-echo "screen-based layout : $(c 'UIScreen\.main|UIScreen\.current')"
-echo "idiom/orientation   : $(c 'userInterfaceIdiom|isPad|isPhone|UIDevice\.current\.orientation')"
-echo "fixed widths        : $(c '\.frame\(width: *[0-9]+')"
-echo "fixed heights       : $(c '\.frame\(height: *[0-9]{3}')"
-echo "text-only buttons   : $(c 'Button\("(Done|Cancel|Close|Save|Continue)"\)')"
-echo "sheets/covers       : $(c '\.sheet\(|fullScreenCover\(')"
-echo "split views         : $(c 'NavigationSplitView')"
-echo "custom bars         : $(c 'UIToolbar|UITabBar\(|UINavigationBar\(')"
-echo "ignoresSafeArea     : $(c 'ignoresSafeArea')"
-grep -h "TARGETED_DEVICE_FAMILY\|IPHONEOS_DEPLOYMENT_TARGET" "$D"/*.xcodeproj/project.pbxproj | sort -u
+./scripts/duo-audit.sh /path/to/YourApp
+# Include file and line references for manual inspection:
+./scripts/duo-audit.sh /path/to/YourApp --details
 ```
+
+Run those commands from this repository's root. In the installed skill, use `bash audit.sh /path/to/YourApp --details` from the skill folder instead.
 
 ## 11. Prompt for a coding agent
 
-> Read this playbook in full before doing anything. Run the §10 audit against this repo and report the numbers. Then work §3 Phase 1, with one commit per checklist item and the tests passing after each. Don't add device- or pose-specific branches (§2, rules 1 and 4); for the fold, use the patterns in §5. Start Phase 2 only if the project builds with the iOS 27.1 SDK, and gate each API with `#available` for the iOS version listed in §4. Never hard-code the device numbers from §1. After any layout change, capture the affected screens in each pose (§7) and look at them yourself before calling the change done. Finish by listing anything this playbook got wrong or doesn't cover.
+> Read this playbook in full before changing code. Run the §10 audit against this repo, report the numbers and inspect the hits; they are not automatic defects. Establish the selected SDK, deployment target and existing changes. Work through applicable §3 Phase 1 items in small, reviewable changes, testing each. Use the 27.0 parts of Phase 2 with the 27.0 SDK and the 27.1 parts only with the 27.1 SDK or newer; runtime `#available` guards do not make new APIs compile with an older SDK. Preserve fallbacks without raising the deployment target unless agreed. Base layout on container geometry and reserved regions, not device-model or hinge-angle pose checks; keep every feature reachable. Never hard-code the device measurements from §1. Choose active-only versus inactive-region layout deliberately, and keep coordinate-space/RTL handling consistent. Preserve state above changing layout branches. After layout changes, visually inspect captures and run the accessibility, keyboard, state-continuity and real-navigation checks in §7 on affected configurations. Respect the user's scope and approval requirements for commits, publishing and destructive resets. Finish with what changed, what passed, what is blocked or untested, and any errors or gaps in this playbook.
 
 ---
 
-*Version 1.1 (2026-09-26). Checked against Apple's iPhone Duo documentation, Human Interface Guidelines, Tech Talks, API reference and the Group Lab Q&A as of Xcode 27.1 beta (27A9269) and the iOS 27.1 beta SDK, plus field notes from shipping a SwiftUI app to iPhone Duo. APIs and behavior may change before and after release; check them against Apple's current docs.*
+*Version 1.2 (2026-09-26). Builds on the 1.1 source review against Apple's documentation and Xcode 27.1 beta (27A9269), with corrected preview guidance, coordinate-space/RTL handling and acceptance checks. Field observations describe beta-simulator testing of an existing app, not shipping-hardware validation. APIs and behavior may change; check current docs and rerun affected tests before release.*

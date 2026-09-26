@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2 (2026-09-26)
+
+- Separated compliant App Store screen-recording previews from filmed marketing demos, with the App Review rule linked.
+- Replaced the padding-only scroll-coordinate recipe with viewport-first guidance and explicit conversion requirements for moving content.
+- Replaced manual page offsets with semantic stacks matching mirrored reserved-region coordinates; documented RTL policy and bounded-viewport assumptions.
+- Made inactive-region handling a deliberate layout choice, not a universal requirement.
+- Reframed fixed sizes, safe-area arithmetic, grid counts and off-screen buttons as contextual audit signals rather than automatic defects.
+- Distinguished SDK compile-time requirements from runtime availability; 27.0 improvements no longer require the 27.1 SDK.
+- Added accessibility, keyboard, real-navigation and state-continuity acceptance checks; clarified beta-simulator versus hardware evidence and safe reset practices.
+- Aligned the installable agent instructions, added audit line references and error handling, and removed the duplicated inline script from the playbook.
+- Added repeatable audit tests and SDK type-checking of the playbook's Swift layout snippets. These checks do not establish runtime layout correctness.
+
 ## 1.1 (2026-09-26)
 
 Fact-checked against Apple's current documentation, HIG, API reference, Tech Talks and the Group Lab Q&A.
