@@ -11,7 +11,7 @@ It combines Apple's documentation, the six iPhone Duo Tech Talks and the Group L
 ## What's inside
 
 - The device: size classes, orientation, the SDK gate (Xcode 26, 27.0, 27.1), and test sizes with their Apple sources
-- Five rules and a phased checklist: current SDK, iOS 27.1 SDK, App Store
+- Five rules and a phased checklist: no iOS 27 APIs (Xcode 26 or 27), iOS 27.0 and 27.1 APIs, App Store
 - An API quick reference for SwiftUI and UIKit
 - Fold-aware SwiftUI patterns: two pages in landscape, focal element above the hinge, cards centered on one page, RTL and viewport/content coordinate handling
 - Pitfalls and dead ends, including what the outer display can't do
