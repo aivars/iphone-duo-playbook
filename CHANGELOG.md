@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1 (2026-09-28)
+
+- §8 featuring nomination timing clarified: Apple's lead time (at least 2 weeks' notice, 3 weeks recommended, ideally up to 3 months) counts back from your own publish date, not the iPhone Duo launch. There is no Duo-specific nomination deadline; iOS 27.1 SDK updates can't publish before iOS 27.1 ships.
+
 ## 1.3 (2026-09-26)
 
 Readability pass; no facts, links or code changed.

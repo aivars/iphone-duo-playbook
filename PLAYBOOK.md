@@ -480,7 +480,16 @@ let ring = min(320, max(180, availableHeight - heightOfEverythingElse))
 - Label simulations and props honestly; don't present them as real-device validation.
 - Keep it separate from the App Store preview.
 
-**Featuring nomination** (App Store Connect, Featuring Nominations): use the *App Enhancements* type. Submit at least 3 weeks ahead ([nominate your app for featuring](https://developer.apple.com/help/app-store-connect/manage-featuring-nominations/nominate-your-app-for-featuring)), ideally up to 3 months ([getting featured](https://developer.apple.com/app-store/getting-featured/)). What helps:
+**Featuring nomination** (App Store Connect, Featuring Nominations): use the *App Enhancements* type.
+
+**Timing counts back from your own publish date, not from the iPhone Duo launch.** In the form you pick the date or date range your update will publish. Apple asks for:
+- at least 2 weeks' notice ([getting featured](https://developer.apple.com/app-store/getting-featured/));
+- a recommended minimum of 3 weeks ([nominate your app for featuring](https://developer.apple.com/help/app-store-connect/manage-featuring-nominations/nominate-your-app-for-featuring));
+- ideally up to 3 months ahead, for wider consideration ([getting featured](https://developer.apple.com/app-store/getting-featured/)).
+
+There's no Duo-specific nomination deadline. Updates built with the iOS 27.1 SDK can't publish before iOS 27.1 ships, so pick a date range after its release, and nominate as early as you can.
+
+What helps:
 - a one-line story about why iPhone Duo suits your app's real use (for example, "propped half-folded on a table, the timer faces you above the hinge");
 - the specific technologies (reserved regions, vertical bars, accessibility);
 - the version and date it ships.
@@ -538,4 +547,4 @@ Run those commands from this repository's root. In the installed skill, use `bas
 
 ---
 
-*Version 1.3 (2026-09-26). Checked against Apple's documentation and Xcode 27.1 beta (27A9269). Field observations come from beta-simulator testing of an existing app, not shipping hardware. APIs and behavior may change: check current docs and rerun affected tests before release.*
+*Version 1.3.1 (2026-09-28). Checked against Apple's documentation and Xcode 27.1 beta (27A9269). Field observations come from beta-simulator testing of an existing app, not shipping hardware. APIs and behavior may change: check current docs and rerun affected tests before release.*
