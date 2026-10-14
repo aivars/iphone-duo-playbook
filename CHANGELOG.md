@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4 (2026-10-14)
+
+Field notes from shipping an iPhone Duo App Store release.
+
+- Status: Xcode 27.1 RC builds are accepted for App Store submission; App Store Connect now accepts iPhone Duo screenshots and previews.
+- §3 Phase 3: Duo screenshot set and preview sizes (1920 × 886 / 886 × 1920); added the iOS 27 product page header as a release decision.
+- §7: capturing without scripting the pose (reuse a posed simulator, static screens before timed ones, auto-detect undrawn frames, back up app containers).
+- §8: screenshot design notes (show every pose early, landscape framing, demo-data copy, half-empty book-pose screens) and the App Store Connect API upload path for `APP_IPHONE_DUO`.
+- §8: new section on product page header and search results assets: Apple's specs, template safe areas, what iPhone shows in practice, text and art advice.
+- §9: links to Apple's creative assets specifications and asset best practices.
+
 ## 1.3.1 (2026-09-28)
 
 - §8 featuring nomination timing clarified: Apple's lead time (at least 2 weeks' notice, 3 weeks recommended, ideally up to 3 months) counts back from your own publish date, not the iPhone Duo launch. There is no Duo-specific nomination deadline; iOS 27.1 SDK updates can't publish before iOS 27.1 ships.

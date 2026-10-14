@@ -15,12 +15,13 @@ A practical guide to making an existing iPhone app feel native on iPhone Duo.
 4. **Keep controls off the fold** using reserved regions (§5).
 5. **Test poses, transitions and accessibility,** not just static screenshots (§7).
 
-> **Status on September 26, 2026**
+> **Status on October 14, 2026**
 > - iOS 27.0 and Xcode 27 were released on September 14.
-> - **Xcode 27.1 (with the iOS 27.1 SDK) is in beta.** Builds made with it can go to TestFlight, but not to the App Store yet ([App Store Connect release notes](https://developer.apple.com/help/app-store-connect/release-notes/)).
+> - **Xcode 27.1 is at release candidate, and RC builds are accepted for App Store submission** (field observation: we archived, uploaded and attached a 27.1 RC build to an App Store version).
+> - **App Store Connect now accepts iPhone Duo screenshots and app previews** (since early October; see §8).
 > - iPhone Duo ships with iOS 27.1, available from October 23.
 >
-> Everything marked "iOS 27.1" below needs the Xcode 27.1 beta today.
+> Everything marked "iOS 27.1" below needs Xcode 27.1.
 
 > **How to use this**
 > - **People:** read §1 to §3, then skim §5 and §6. Sections 5 and 6 cover what Apple's documentation doesn't.
@@ -153,11 +154,13 @@ Each item shows the iOS version it needs.
 - [ ] **Split View at half width** and Picture in Picture (the app resizes vertically when PiP pins to the top).
 
 ### Phase 3: store and launch
-- [ ] **Screenshots:** App Store Connect lists iPhone Duo sizes but **can't accept Duo uploads until later this year** ([screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications)).
+- [ ] **Screenshots:** App Store Connect accepts an **iPhone Duo** set (up to 10) next to your iPhone sets ([screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications)). How we built and uploaded ours is in §8.
   - Sizes: outer 1398 × 2034, inner 2007 × 2853, both also in landscape.
+  - App previews: 1920 × 886 or 886 × 1920.
   - Apple's iOS 27 UI Kit (Figma, Sketch) and the iPhone Duo product bezel are in [Apple Design Resources](https://developer.apple.com/design/resources/).
 - [ ] **A featuring nomination** in App Store Connect, if the Duo work is substantial (§8).
 - [ ] **What's New:** decide whether to mention iPhone Duo there.
+- [ ] **Product page header** (new in iOS 27, not Duo-specific): decide whether to add one with this release (§8).
 
 ## 4. API quick reference
 
@@ -447,6 +450,12 @@ let ring = min(320, max(180, availableHeight - heightOfEverythingElse))
 - Run a background loop that captures both displays every 2 seconds while someone folds, rotates and closes the device on each key screen, including mid-timer. Then remove duplicate frames and review.
 - It caught layout jumps and state issues that per-pose screenshots never show.
 
+**Capturing without scripting the pose** (field observation):
+- A simulator keeps its pose. A Duo simulator someone left open in landscape stays that way, so you can script a full capture run on it without touching Device Hub again. A freshly created Duo simulator starts closed, which is exactly what you want for cover-display shots. Running one of each in parallel covers both displays.
+- Capture static screens (home, history, settings) **before** any timed screen. A session you started earlier can fire a notification banner into a later capture.
+- Check each capture automatically: a frame with almost no contrast is a launch screen that wasn't drawn yet. Under load we saw 6 s after launch not be enough; 12 s was reliable. Re-shoot those with a longer wait.
+- If the capture run resets app data on someone's own simulator, back up the app's data and App Group containers first (`xcrun simctl get_app_container <udid> <bundle-id> data|groups`) and restore them afterwards.
+
 **Resetting state** (field observation):
 - Editing preferences from outside the app didn't stick: the app's cached preferences overwrote them.
 - Prefer a debug-only in-app reset or launch option, on a dedicated test installation.
@@ -466,14 +475,42 @@ let ring = min(320, max(180, availableHeight - heightOfEverythingElse))
 
 ## 8. Store and featuring
 
-**Screenshots** (for when App Store Connect accepts Duo uploads; see §3, Phase 3):
+**Screenshots** (field notes from shipping a Duo set in October 2026):
 - Take them with seeded demo data and a clean status bar: `xcrun simctl status_bar <udid> override --time 9:41 --batteryState charged --batteryLevel 100`.
 - The simulator doesn't show the pose, so a half-folded screenshot looks like a flat one with a clever layout. Lead with **landscape book-pose** shots, where two pages read as "made for iPhone Duo" at a glance.
 - Capture timers mid-phase (ring about half full), not at 0:00.
+- **Show every pose early.** One frame that puts a half-folded capture (with the fold band drawn in) next to a cover-display capture tells the Duo story in a single image. We put it second, right after the hero.
+- **Frame landscape captures on a 2853 × 2007 canvas** with your iPhone set's caption style on top. Keep the capture's aspect ratio, and size captions from the canvas height so they don't dwarf the device.
+- **Read your demo data like a customer would.** Ours seeded a program that showed "You're a few days behind." on the home card, which isn't something to advertise. Shifting the seeded start date by a day fixed it.
+- **Book-pose captures expose half-empty screens** that look fine on a phone (for example, a chart tab that leaves one page blank). Swap those for screens that use both pages, and fix the layout later.
+- **Uploading through the App Store Connect API** (display type `APP_IPHONE_DUO`):
+  1. Create or reuse the `appScreenshotSet` with `screenshotDisplayType: APP_IPHONE_DUO` on the version localization.
+  2. `POST /v1/appScreenshots` (file name and size) to reserve each file, `PUT` the bytes to the returned upload operations, then `PATCH` it with `uploaded: true` and the file's MD5 as `sourceFileChecksum`.
+  3. `PATCH /v1/appScreenshotSets/{id}/relationships/appScreenshots` with the IDs in the order you want.
+- One set can mix inner and outer sizes; App Store Connect accepted it. We kept ours all inner-landscape for a consistent row.
 
 **App Store preview:**
 - Use screen recordings of the app itself. [App Review Guideline 2.3.4](https://developer.apple.com/app-store/review/guidelines/#accurate-metadata) allows narration and overlays, but a filmed device or prop demo can't replace the screen capture.
-- App Store Connect lists iPhone Duo preview specs, but uploads aren't available yet.
+- iPhone Duo previews are now accepted at 1920 × 886 or 886 × 1920. Your book-pose recording (2853 × 2007) has a different aspect ratio, so crop or letterbox it deliberately.
+
+**Product page header and search results assets** (iOS 27 and iPadOS 27; not Duo-specific, but you'll meet them in the same release):
+
+| Asset | Ratio | Pixels | Notes |
+|---|---|---|---|
+| Header | 21:9 | 3840 × 1646 | Image (.png/.jpg) or video (.mov/.m4v/.mp4, 30 or 60 fps, 5–30 s, loops, starts muted) |
+| Header or search, universal | 16:9 | 5244 × 2950 | PNG only, image only; one file can serve both placements |
+| Search results | 3:2 | 1920 × 1280 to 3840 × 2560 | Image or video; video stays muted |
+
+Source: [creative assets specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications). No alpha channels.
+
+- **A search results asset replaces your screenshots in search results.** If your screenshots convert well, put any search asset through a product page optimization test before shipping it.
+- **Safe areas from Apple's templates** (the "Art Safe Area" layer in the [header and universal templates](https://developer.apple.com/app-store/asset-best-practices/)):
+  - Header: x 1097–2743, y 493–1154 of 3840 × 1646 (centered).
+  - Universal: x 1921–3323, y 660–1622 of 5244 × 2950 (centered horizontally, well above the vertical middle).
+- **What iPhone actually shows** (reports from other developers using App Store Connect's Preview, not Apple documentation): about the middle 84% of the header's width, round back and share buttons over the top corners, and the image's top edge stretched behind the status bar. Keep the top edge plain and the subject inside the safe area.
+- **Text:** the app name and icon sit right below the header, and iPhone shrinks the image a lot, so we shipped ours without text. That also makes one image work in every language.
+- **Getting art at this size:** our in-app photos were far too small (1560 px wide). An image model at 4K in 21:9 produced usable underwater photography, but check every candidate at 100%: two of our four had defects (garbled "text" on a wetsuit, fins not attached to the body).
+- Approved assets live in the Asset Library and can be swapped onto a live version later without a new build.
 
 **Separate marketing video:**
 - A filmed device can show the fold on your website, on social channels, or in a featuring pitch where that format is accepted.
@@ -509,6 +546,7 @@ What helps:
   - [Build a great camera experience for iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111465/): the virtual front camera, the rotation coordinator and the direction coordinator.
 - [Device Hub](https://developer.apple.com/documentation/xcode/device-hub) and [configuring a simulated device](https://developer.apple.com/documentation/xcode/configuring-the-environment-of-a-simulated-device).
 - [App Store screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications).
+- [Creative assets specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications) and [asset best practices](https://developer.apple.com/app-store/asset-best-practices/) (product page header and search results).
 - [iPhone Duo technical specifications](https://www.apple.com/iphone-duo/specs/).
 
 **Xcode's own agent skill.** Xcode 27.1 ships an `app-resizability` skill for its coding assistant, as plain Markdown inside the app bundle (`Xcode.app/Contents/PlugIns/IDEIntelligenceChat.framework/Versions/A/Resources/`, the `app-resizability` prompt template plus its `.md.packaged` reference files).
@@ -547,4 +585,4 @@ Run those commands from this repository's root. In the installed skill, use `bas
 
 ---
 
-*Version 1.3.1 (2026-09-28). Checked against Apple's documentation and Xcode 27.1 beta (27A9269). Field observations come from beta-simulator testing of an existing app, not shipping hardware. APIs and behavior may change: check current docs and rerun affected tests before release.*
+*Version 1.4 (2026-10-14). Checked against Apple's documentation and Xcode 27.1 RC (27A9275). Field observations come from beta-simulator testing of an existing app, not shipping hardware. APIs and behavior may change: check current docs and rerun affected tests before release.*
