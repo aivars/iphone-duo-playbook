@@ -427,7 +427,9 @@ let ring = min(320, max(180, availableHeight - heightOfEverythingElse))
 
 **Setting poses:**
 - Set each pose with the controls below the device screen in [Device Hub](https://developer.apple.com/documentation/xcode/device-hub), or with Controls > Rotate Left / Rotate Right (Tech Talk 111461).
-- We found no `simctl` command that folds or rotates the device (field observation; we haven't tested `simctl io screenConfig power`). Plan test runs around a person changing the pose.
+- We found no `simctl` command that folds or rotates the device (field observation; we haven't tested `simctl io screenConfig power`).
+- **RocketSim's CLI can set poses headlessly** (field observation, RocketSim ≥ Duo support): `rocketsim duo pose closed|book|open --udid <udid>` and `rocketsim duo hinge` work on a booted Duo simulator with no Device Hub and no person at the keyboard. Two caveats: a just-booted Duo can answer `hinge_not_ready` once before the pose call succeeds, and RocketSim's coordinate taps mistranslate on a posed Duo ("No translation object") — target elements semantically (its AXPress `interact activate`) instead of by coordinates.
+- Scripting Device Hub itself is a dead end (field observation, Xcode 27.1 RC): the app exposes no windows or menu bar to the accessibility API, so AppleScript and AX-based automation cannot see it at all. Without RocketSim, plan test runs around a person changing the pose.
 - Xcode 27.1's Previews canvas can switch to the other display.
 
 **Capturing each display (field observation):**
@@ -585,4 +587,4 @@ Run those commands from this repository's root. In the installed skill, use `bas
 
 ---
 
-*Version 1.4 (2026-10-14). Checked against Apple's documentation and Xcode 27.1 RC (27A9275). Field observations come from beta-simulator testing of an existing app, not shipping hardware. APIs and behavior may change: check current docs and rerun affected tests before release.*
+*Version 1.5 (2026-10-20). Checked against Apple's documentation and Xcode 27.1 RC (27A9275). Field observations come from beta-simulator testing of an existing app, not shipping hardware. APIs and behavior may change: check current docs and rerun affected tests before release.*

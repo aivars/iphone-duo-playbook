@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5 (2026-10-20)
+
+Pose scripting, from adapting a second app (a fasting timer).
+
+- §7: RocketSim's `duo pose closed|book|open` sets simulator poses headlessly — the first scriptable alternative to Device Hub; its coordinate taps mistranslate on a posed Duo, so target elements semantically (AXPress).
+- §7: Device Hub itself cannot be scripted: it exposes no windows or menus to the accessibility API (Xcode 27.1 RC).
+
 ## 1.4 (2026-10-14)
 
 Field notes from shipping an iPhone Duo App Store release.
