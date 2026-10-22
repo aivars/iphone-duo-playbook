@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.1 (2026-10-22)
+
+- §1/§5.1 correction: on the 27.1 RC an **inactive** division keeps its band's full thickness; only `isActive` distinguishes flat from folded. The earlier "zero width when flat" note matched a beta. Found when a flat-open layout kept splitting around the hinge.
+
 ## 1.5 (2026-10-20)
 
 Pose scripting, from adapting a second app (a fasting timer).

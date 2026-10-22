@@ -68,7 +68,7 @@ The outer display is 64 pt wider and about 200 pt shorter than a 6.3-inch iPhone
 
 **In code, read the fold at runtime** in your own view's coordinates (§4, §5):
 - The region's frame [includes interactive margins](https://developer.apple.com/documentation/swiftui/reservedregion/frame).
-- When the device is flat, the fold region is inactive and zero wide ([Tech Talk: Strike a pose with adaptive layouts on iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111463/)).
+- When the device is flat, the fold region is inactive ([Tech Talk: Strike a pose with adaptive layouts on iPhone Duo](https://developer.apple.com/videos/play/tech-talks/111463/)). **On the 27.1 RC simulator an inactive region keeps its band's full thickness** (field observation; the Tech Talk's zero-width description matched an earlier beta). Branch on `isActive`, never on the frame being empty — a thickness check silently treats a flat phone as folded.
 
 ### The SDK gate
 
@@ -259,7 +259,7 @@ enum DuoFold {
 ```
 
 **Inactive regions: choose deliberately.**
-- This helper includes them, to keep a two-page structure when the device is flat. When flat, the fold region is inactive with zero thickness.
+- This helper includes them, to keep a two-page structure when the device is flat. Check `isActive` to tell flat from folded: on the 27.1 RC an inactive region keeps its thickness (field observation), so an empty-frame test never fires.
 - Apple suggests inactive regions for high-level decisions such as grid column counts (Tech Talk 111463).
 - To split only when folding makes it useful, query active regions (omit `.includeInactive`) or use an arrangement view.
 - A deliberate, state-preserving transition is fine. Avoiding every layout change isn't a requirement.
@@ -587,4 +587,4 @@ Run those commands from this repository's root. In the installed skill, use `bas
 
 ---
 
-*Version 1.5 (2026-10-20). Checked against Apple's documentation and Xcode 27.1 RC (27A9275). Field observations come from beta-simulator testing of an existing app, not shipping hardware. APIs and behavior may change: check current docs and rerun affected tests before release.*
+*Version 1.5.1 (2026-10-22). Checked against Apple's documentation and Xcode 27.1 RC (27A9275). Field observations come from beta-simulator testing of an existing app, not shipping hardware. APIs and behavior may change: check current docs and rerun affected tests before release.*
