@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6 (2026-10-24)
+
+- Refresh the release status for Xcode 27.1 final and accepted 27.2 RC builds; distinguish current requirements from April 2027 SDK and Duo screenshot gates.
+- Correct ArrangementView navigation nesting; replace the blanket orientation-lock claim with scoped testing guidance.
+- Add an active-fold helper and use it for the seated portrait example, avoiding a needless split when flat while preserving deliberate two-page layouts.
+- Add Release artifact/provenance checks, conditional production gates, and explicit uploaded/submitted/approved/released reporting.
+- Capture release lessons: RTL and background-test false positives, semantic tab selectors, subscription-sheet dismissal, isolated screenshot fixtures and upload receipts.
+- Label screenshot-set uploads deprecated but historically working; outline the App Asset Library migration without claiming an untested CLI workflow is verified.
+- Add screenshot majority-in-use guidance, extreme-size iPhone Mirroring checks and Apple's documented agent-skill export command. Preserve simulator/hardware and historical-toolchain limits.
+
 ## 1.5.1 (2026-10-22)
 
 - §1/§5.1 correction: on the 27.1 RC an **inactive** division keeps its band's full thickness; only `isActive` distinguishes flat from folded. The earlier "zero width when flat" note matched a beta. Found when a flat-open layout kept splitting around the hinge.
